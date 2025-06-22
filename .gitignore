@@ -1,0 +1,7 @@
+tmux-client-*.log
+*~
+.*.swp
+.*.swo
+.DS_Store
+Thumbs.db
+CLAUDE.local.md

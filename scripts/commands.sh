@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+
+# tmux-buffer-sync user commands
+# Handles manual tmux commands for user interaction
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
+
+
+# Register user commands globally
+register_user_commands() {
+    # Register commands using tmux command alias system globally
+    # Commands will detect current session automatically using #{session_name}
+    local plugin_script
+    plugin_script="$(cd "$SCRIPT_DIR/.." && pwd)/buffer-sync.tmux"
+
+    tmux set-option -g command-alias "buffer-sync-now=run-shell '$plugin_script user-command buffer-sync-now #{session_name}'"
+    tmux set-option -ag command-alias "buffer-sync-status=run-shell '$plugin_script user-command buffer-sync-status #{session_name}'"
+
+    return 0
+}
+
+get_command_help() {
+    cat <<'EOF'
+tmux-buffer-sync User Commands:
+
+:buffer-sync-now
+    Manually trigger immediate buffer synchronization
+    Performs bidirectional sync (push local buffers, pull remote buffers)
+    Returns: sync status and buffer counts
+
+:buffer-sync-status
+    Display current sync configuration and status
+    Shows: namespace, frequency, buffer count, copy hooks status
+    Returns: formatted configuration information
+
+Configuration:
+    @buffer-sync-count <number>        - Number of buffers to sync (default: 10)
+    @buffer-sync-frequency <seconds>   - Sync frequency in seconds (default: 15)
+    @buffer-sync-namespace <string>    - Storage namespace (default: tmux-buffers)
+    @buffer-sync-copy-hooks <on|off>   - Copy operation hooks (default: on)
+    @buffer-sync-status-display <mode> - Status display mode (default: compact)
+EOF
+}
+
+format_sync_command_output() {
+    local status="$1"
+    local pushed="$2"
+    local pulled="$3"
+
+    case "$status" in
+        "success")
+            echo "✓ Sync completed successfully - Pushed: $pushed, Pulled: $pulled buffers"
+            ;;
+        "push_failed")
+            echo "✗ Sync failed during push phase - Check atuin connectivity"
+            ;;
+        "pull_failed")
+            echo "✗ Sync failed during pull phase - Pushed: $pushed buffers"
+            ;;
+        "partial_failure")
+            echo "⚠ Sync completed with warnings - Pushed: $pushed, Pulled: $pulled buffers"
+            ;;
+        *)
+            echo "? Sync status unknown - Check configuration and atuin availability"
+            ;;
+    esac
+}
+
+format_status_command_output() {
+    local session="$1"
+    local ns count freq status
+    ns=$(tmux show-option -t "$session" -v "@buffer-sync-namespace" 2>/dev/null || echo "tmux-buffers")
+    count=$(tmux show-option -t "$session" -v "@buffer-sync-count" 2>/dev/null || echo "10")
+    freq=$(tmux show-option -t "$session" -v "@buffer-sync-frequency" 2>/dev/null || echo "15")
+    status=$(get_last_sync_status "$session")
+
+    echo "buffer-sync: namespace=$ns, count=$count, freq=${freq}s, status=$status"
+}
+
+execute_buffer_sync_now() {
+    local session="$1"
+
+    if ! is_atuin_available; then
+        echo "✗ Buffer sync unavailable - atuin not found"
+        return 1
+    fi
+
+    local count
+    count=$(tmux show-option -t "$session" -v "@buffer-sync-count" 2>/dev/null || echo "10")
+    [[ "$count" =~ ^[0-9]+$ ]] && [ "$count" -gt 0 ] || count="10"
+
+    # timing
+    local start_time
+    start_time=$(date +%s)
+
+    if sync_buffers "$session"; then
+        local end_time duration
+        end_time=$(date +%s)
+        duration=$((end_time - start_time))
+
+        format_sync_command_output "success" "$count" "$count"
+        echo "Completed in ${duration}s"
+        return 0
+    else
+        format_sync_command_output "push_failed" "0" "0"
+        return 1
+    fi
+}
+
+execute_buffer_sync_status() {
+    local session="$1"
+    local status_output
+    status_output=$(format_status_command_output "$session")
+
+    tmux display-message -t "$session" "$status_output"
+    echo "$status_output"
+}
