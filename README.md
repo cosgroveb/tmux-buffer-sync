@@ -1,5 +1,7 @@
 # tmux-buffer-sync
 
+[![CI](https://github.com/cosgroveb/tmux-buffer-sync/workflows/CI/badge.svg)](https://github.com/cosgroveb/tmux-buffer-sync/actions)
+
 A tmux plugin that synchronizes copy buffers across multiple servers using [atuin](https://atuin.sh/)'s [kv storage](https://blog.atuin.sh/release-v16/). Share clipboard content between tmux sessions running on different machines.
 
 - **Bidirectional sync**: Pushes local buffers to remote storage and pulls remote buffers
