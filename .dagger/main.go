@@ -170,7 +170,7 @@ func (m *TmuxBufferSync) TestMultiServerSync(ctx context.Context, source *dagger
 	// Create shared storage simulation using a simple service
 	sharedStorage := dag.Container().
 		From("alpine:latest").
-		WithExec([]string{"apk", "add", "curl"}).
+		WithExec([]string{"apk", "add", "curl", "python3"}).
 		WithExposedPort(8080).
 		WithExec([]string{"sh", "-c", "mkdir -p /shared && cd /shared && python3 -m http.server 8080"}).
 		AsService()

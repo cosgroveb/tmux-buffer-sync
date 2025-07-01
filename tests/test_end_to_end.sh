@@ -43,15 +43,25 @@ print_pass "Scripts load correctly"
 
 # Test 3: Configuration functions work
 echo "Testing configuration functions..."
-count=$(tmux show-option -v "@buffer-sync-count" 2>/dev/null || echo "10")
+# Test configuration defaults
+session=$(tmux display-message -p '#S' 2>/dev/null || echo "")
+if [ -n "$session" ]; then
+    count=$(tmux show-option -t "$session" -v "@buffer-sync-count" 2>/dev/null || echo "10")
+    namespace=$(tmux show-option -t "$session" -v "@buffer-sync-namespace" 2>/dev/null || echo "tmux-buffers")
+    copy_hooks_value=$(tmux show-option -t "$session" -v "@buffer-sync-copy-hooks" 2>/dev/null || echo "")
+else
+    # Fallback if not in tmux session
+    count="10"
+    namespace="tmux-buffers"
+    copy_hooks_value=""
+fi
+
 [[ "$count" =~ ^[0-9]+$ ]] && [ "$count" -gt 0 ] || count="10"
 [ "$count" = "10" ] || { print_fail "Default count should be 10, got $count"; exit 1; }
 
-namespace=$(tmux show-option -v "@buffer-sync-namespace" 2>/dev/null || echo "tmux-buffers")
 [ "$namespace" = "tmux-buffers" ] || { print_fail "Default namespace should be tmux-buffers, got $namespace"; exit 1; }
 
-value=$(tmux show-option -v "@buffer-sync-copy-hooks" 2>/dev/null || echo "")
-case "$(echo "$value" | tr '[:upper:]' '[:lower:]')" in
+case "$(echo "$copy_hooks_value" | tr '[:upper:]' '[:lower:]')" in
     "off"|"false"|"0"|"no"|"disabled") copy_hooks="off" ;;
     *) copy_hooks="on" ;;
 esac
