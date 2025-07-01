@@ -145,8 +145,8 @@ EOF
 
 chmod +x /tmp/demo.sh
 
-# Record with asciinema using explicit terminal dimensions
-asciinema rec /tmp/demo.cast -c "bash /tmp/demo.sh" --overwrite --cols=120 --rows=30
+# Record with asciinema (dimensions set via environment variables)
+asciinema rec /tmp/demo.cast -c "bash /tmp/demo.sh" --overwrite
 
 # Convert to SVG then GIF with fixed dimensions
 svg-term --cast /tmp/demo.cast --out /tmp/demo.svg --window --width=120 --height=30
