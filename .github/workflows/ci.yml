@@ -21,16 +21,3 @@ jobs:
         verb: call
         args: test --source=.
         
-    - name: Generate and export demo gif
-      run: |
-        dagger call generate-demo-gif --source=. export --path=./demo.gif
-        mkdir -p ./artifacts
-        mv ./demo.gif ./artifacts/
-        
-    - name: Upload demo gif artifact
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: tmux-buffer-sync-demo
-        path: ./artifacts/
-        retention-days: 30

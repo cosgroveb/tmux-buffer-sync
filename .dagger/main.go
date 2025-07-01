@@ -78,88 +78,6 @@ func (m *TmuxBufferSync) Lint(ctx context.Context, source *dagger.Directory) err
 	return nil
 }
 
-// Generate demo gif of multi-server sync
-func (m *TmuxBufferSync) GenerateDemoGif(ctx context.Context, source *dagger.Directory) *dagger.File {
-	return m.recordMultiServerDemo(ctx, source)
-}
-
-// Record multi-server sync demo and create gif
-func (m *TmuxBufferSync) recordMultiServerDemo(ctx context.Context, source *dagger.Directory) *dagger.File {
-	return dag.Container().
-		From("ubuntu:22.04").
-		WithExec([]string{"apt-get", "update"}).
-		WithExec([]string{"apt-get", "install", "-y", "asciinema", "imagemagick", "nodejs", "npm"}).
-		WithExec([]string{"npm", "install", "-g", "svg-term-cli"}).
-		WithEnvVariable("TERM", "xterm-256color").
-		WithEnvVariable("COLUMNS", "120").
-		WithEnvVariable("LINES", "30").
-		WithNewFile("/demo-script.sh", `#!/bin/bash
-set -e
-
-# Set up terminal environment for asciinema
-export TERM=xterm-256color
-export COLUMNS=120
-export LINES=30
-
-echo "🎬 Recording tmux-buffer-sync demo..."
-
-# Create a simple demo script
-cat > /tmp/demo.sh << 'EOF'
-#!/bin/bash
-clear
-echo "╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗"
-echo "║                                        tmux-buffer-sync Demo                                                     ║"
-echo "╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝"
-echo ""
-echo "📋 Synchronize tmux copy buffers across multiple servers using atuin kv storage"
-echo ""
-echo "🚀 Features:"
-echo "   ✓ Bidirectional sync between servers"
-echo "   ✓ Automatic sync on copy operations" 
-echo "   ✓ Periodic background sync"
-echo "   ✓ Cross-server buffer sharing"
-echo ""
-echo "⚙️  Configuration (add to ~/.tmux.conf):"
-echo "   set -g @buffer-sync-count 10              # Number of buffers to sync"
-echo "   set -g @buffer-sync-frequency 15          # Sync interval in seconds"
-echo "   set -g @buffer-sync-namespace tmux-buffers # Storage namespace"
-echo ""
-echo "⚡ Manual commands:"
-echo "   :buffer-sync-now     # Trigger immediate sync"
-echo "   :buffer-sync-status  # Show sync status and configuration"
-echo ""
-echo "🌐 How it works:"
-echo "   1. Copy content in tmux session on Server A"
-echo "   2. Plugin automatically syncs to atuin kv storage"
-echo "   3. Server B pulls latest buffers from shared storage"
-echo "   4. Paste content is now available on Server B!"
-echo ""
-echo "🔧 Installation:"
-echo "   # Add to ~/.tmux.conf before TPM line:"
-echo "   set -g @plugin 'cosgroveb/tmux-buffer-sync'"
-echo ""
-echo "✨ Perfect for multi-server development workflows!"
-echo ""
-sleep 8
-EOF
-
-chmod +x /tmp/demo.sh
-
-# Record with asciinema (dimensions set via environment variables)
-asciinema rec /tmp/demo.cast -c "bash /tmp/demo.sh" --overwrite
-
-# Convert to SVG then GIF with fixed dimensions
-svg-term --cast /tmp/demo.cast --out /tmp/demo.svg --window --width=120 --height=30
-convert /tmp/demo.svg /tmp/demo.gif
-
-echo "✅ Demo GIF generated successfully!"
-ls -la /tmp/demo.gif
-		`).
-		WithExec([]string{"chmod", "+x", "/demo-script.sh"}).
-		WithExec([]string{"/demo-script.sh"}).
-		File("/tmp/demo.gif")
-}
-
 // Simulate multi-server buffer synchronization
 func (m *TmuxBufferSync) TestMultiServerSync(ctx context.Context, source *dagger.Directory) error {
 	// Create shared storage simulation using a simple service
@@ -257,20 +175,3 @@ func (m *TmuxBufferSync) Test(ctx context.Context, source *dagger.Directory) err
 	return nil
 }
 
-// Generate CI artifacts including demo gif
-func (m *TmuxBufferSync) GenerateArtifacts(ctx context.Context, source *dagger.Directory) *dagger.Directory {
-	// Generate demo gif
-	demoGif := m.GenerateDemoGif(ctx, source)
-	
-	// Create artifacts directory with demo gif
-	return dag.Directory().
-		WithFile("demo.gif", demoGif).
-		WithNewFile("README.md", `# tmux-buffer-sync Demo Artifacts
-
-## demo.gif
-Animated demonstration of tmux-buffer-sync working across multiple servers.
-Shows buffer synchronization in real-time using tmux sessions.
-
-Generated automatically during CI pipeline.
-`)
-}
