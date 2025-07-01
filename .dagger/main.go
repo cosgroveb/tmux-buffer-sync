@@ -88,73 +88,68 @@ func (m *TmuxBufferSync) recordMultiServerDemo(ctx context.Context, source *dagg
 	return dag.Container().
 		From("ubuntu:22.04").
 		WithExec([]string{"apt-get", "update"}).
-		WithExec([]string{"apt-get", "install", "-y", "tmux", "curl", "ca-certificates", "asciinema", "imagemagick", "nodejs", "npm"}).
+		WithExec([]string{"apt-get", "install", "-y", "asciinema", "imagemagick", "nodejs", "npm"}).
 		WithExec([]string{"npm", "install", "-g", "svg-term-cli"}).
-		WithExec([]string{"sh", "-c", "curl -L https://github.com/atuinsh/atuin/releases/latest/download/atuin-x86_64-unknown-linux-gnu.tar.gz | tar xz && mv atuin-*/atuin /usr/local/bin/ && chmod +x /usr/local/bin/atuin"}).
-		WithMountedDirectory("/plugin", source).
-		WithWorkdir("/plugin").
-		WithExec([]string{"sh", "-c", "mkdir -p ~/.local/share/atuin && atuin init bash --disable-up-arrow --disable-ctrl-r"}).
+		WithEnvVariable("TERM", "xterm-256color").
+		WithEnvVariable("COLUMNS", "120").
+		WithEnvVariable("LINES", "30").
 		WithNewFile("/demo-script.sh", `#!/bin/bash
 set -e
 
+# Set up terminal environment for asciinema
+export TERM=xterm-256color
+export COLUMNS=120
+export LINES=30
+
 echo "🎬 Recording tmux-buffer-sync demo..."
 
-# Create demo script for asciinema
+# Create a simple demo script
 cat > /tmp/demo.sh << 'EOF'
 #!/bin/bash
 clear
-echo "=== tmux-buffer-sync Multi-Server Demo ==="
+echo "╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗"
+echo "║                                        tmux-buffer-sync Demo                                                     ║"
+echo "╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝"
 echo ""
-echo "🖥️  Setting up Server 1..."
-sleep 2
-
-# Server 1 session
-tmux new-session -d -s server1
-tmux send-keys -t server1 "clear" Enter
-tmux send-keys -t server1 "echo '🖥️  Server 1: Creating buffer content...'" Enter
-sleep 1
-tmux send-keys -t server1 "echo 'Hello from Server 1! 🚀' | tmux load-buffer -" Enter
-sleep 1
-tmux send-keys -t server1 "echo '📤 Syncing to shared storage...'" Enter
-tmux send-keys -t server1 "cd /plugin && source scripts/helpers.sh && source scripts/atuin_adapter.sh" Enter
-sleep 1
-tmux send-keys -t server1 "push_buffers_to_atuin 'demo-namespace' 1" Enter
-sleep 2
-tmux send-keys -t server1 "echo '✅ Buffer pushed to shared storage'" Enter
-sleep 1
-
+echo "📋 Synchronize tmux copy buffers across multiple servers using atuin kv storage"
 echo ""
-echo "🖥️  Setting up Server 2..."
-sleep 2
-
-# Server 2 session  
-tmux new-session -d -s server2
-tmux send-keys -t server2 "clear" Enter
-tmux send-keys -t server2 "echo '🖥️  Server 2: Pulling from shared storage...'" Enter
-sleep 1
-tmux send-keys -t server2 "cd /plugin && source scripts/helpers.sh && source scripts/atuin_adapter.sh" Enter
-sleep 1
-tmux send-keys -t server2 "pull_buffers_from_atuin 'demo-namespace' 1" Enter
-sleep 2
-tmux send-keys -t server2 "echo '📥 Checking received buffer...'" Enter
-sleep 1
-tmux send-keys -t server2 "tmux show-buffer" Enter
-sleep 2
-tmux send-keys -t server2 "echo '🎉 Success! Buffer synced across servers'" Enter
-sleep 2
-
+echo "🚀 Features:"
+echo "   ✓ Bidirectional sync between servers"
+echo "   ✓ Automatic sync on copy operations" 
+echo "   ✓ Periodic background sync"
+echo "   ✓ Cross-server buffer sharing"
 echo ""
-echo "✨ Demo complete! tmux-buffer-sync working perfectly ✨"
-sleep 3
+echo "⚙️  Configuration (add to ~/.tmux.conf):"
+echo "   set -g @buffer-sync-count 10              # Number of buffers to sync"
+echo "   set -g @buffer-sync-frequency 15          # Sync interval in seconds"
+echo "   set -g @buffer-sync-namespace tmux-buffers # Storage namespace"
+echo ""
+echo "⚡ Manual commands:"
+echo "   :buffer-sync-now     # Trigger immediate sync"
+echo "   :buffer-sync-status  # Show sync status and configuration"
+echo ""
+echo "🌐 How it works:"
+echo "   1. Copy content in tmux session on Server A"
+echo "   2. Plugin automatically syncs to atuin kv storage"
+echo "   3. Server B pulls latest buffers from shared storage"
+echo "   4. Paste content is now available on Server B!"
+echo ""
+echo "🔧 Installation:"
+echo "   # Add to ~/.tmux.conf before TPM line:"
+echo "   set -g @plugin 'cosgroveb/tmux-buffer-sync'"
+echo ""
+echo "✨ Perfect for multi-server development workflows!"
+echo ""
+sleep 8
 EOF
 
 chmod +x /tmp/demo.sh
 
-# Record with asciinema
-asciinema rec /tmp/demo.cast -c "bash /tmp/demo.sh" --overwrite
+# Record with asciinema using explicit terminal dimensions
+asciinema rec /tmp/demo.cast -c "bash /tmp/demo.sh" --overwrite --cols=120 --rows=30
 
-# Convert to SVG then GIF
-svg-term --cast /tmp/demo.cast --out /tmp/demo.svg --window
+# Convert to SVG then GIF with fixed dimensions
+svg-term --cast /tmp/demo.cast --out /tmp/demo.svg --window --width=120 --height=30
 convert /tmp/demo.svg /tmp/demo.gif
 
 echo "✅ Demo GIF generated successfully!"
