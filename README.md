@@ -4,14 +4,14 @@
 
 A tmux plugin that synchronizes copy buffers across multiple servers using [atuin](https://atuin.sh/)'s [kv storage](https://blog.atuin.sh/release-v16/). Share clipboard content between tmux sessions running on different machines.
 
-- **Bidirectional sync**: Pushes local buffers to remote storage and pulls remote buffers
-- **Automatic sync**: Periodic sync and immediate sync on copy
+- 🔄 **Bidirectional sync**: Pushes local buffers to remote storage and pulls remote buffers
+- ⚡ **Automatic sync**: Periodic sync and immediate sync on copy
 
-## Installation
+## Install
 
-### Prerequisite:
+### First make sure you have:
 
-- **[atuin](https://atuin.sh/)** Magical Shell History ✨🐢
+- ✨🐢 **[atuin](https://atuin.sh/)** Magical Shell History
 
 ### Using TPM
 
@@ -50,7 +50,7 @@ A tmux plugin that synchronizes copy buffers across multiple servers using [atui
 
 After installation, verify the plugin is working:
 
-1. **Test basic functionality**:
+1.  **Test basic functionality**:
    ```bash
    # Copy something to a buffer
    echo "test sync" | tmux load-buffer -
@@ -62,7 +62,7 @@ After installation, verify the plugin is working:
    :buffer-sync-status
    ```
 
-3. **Verify cross-server sync** (on another machine with same atuin account):
+3.  **Verify cross-server sync** (on another machine with same atuin account):
    ```bash
    # Pull buffers from remote
    :buffer-sync-now
@@ -94,7 +94,7 @@ set -g @buffer-sync-copy-hooks off
 Use these tmux commands for manual control:
 
 ```bash
-# Trigger immediate sync
+# ⚡ Trigger immediate sync
 :buffer-sync-now
 
 # Show sync status and configuration
