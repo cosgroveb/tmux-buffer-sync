@@ -32,18 +32,27 @@ jobs:
         mkdir -p ~/.local/share/atuin
         atuin init bash --disable-up-arrow --disable-ctrl-r
 
-    - name: Start tmux session for testing
+    - name: Run end-to-end tests in tmux
       run: |
-        # Start tmux in detached mode for testing
+        # Start tmux session
         tmux new-session -d -s test-session
-
-    - name: Run end-to-end tests
-      run: |
-        # Set TMUX environment variable to simulate being in tmux
-        export TMUX=/tmp/tmux-1000/default,1234,0
-        bash tests/test_end_to_end.sh
-      env:
-        TMUX: /tmp/tmux-1000/default,1234,0
+        # Run the test inside tmux and capture output
+        tmux send-keys -t test-session "bash tests/test_end_to_end.sh && echo 'TEST_SUCCESS' || echo 'TEST_FAILED'" Enter
+        # Wait a bit for test to complete
+        sleep 30
+        # Capture the output
+        tmux capture-pane -t test-session -p > /tmp/test_output.log
+        # Check if test was successful
+        if grep -q "TEST_SUCCESS" /tmp/test_output.log; then
+          echo "✓ Tests passed"
+          cat /tmp/test_output.log
+        else
+          echo "✗ Tests failed"
+          cat /tmp/test_output.log
+          exit 1
+        fi
+        # Clean up
+        tmux kill-session -t test-session 2>/dev/null || true
 
   lint:
     runs-on: ubuntu-latest

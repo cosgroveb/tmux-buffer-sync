@@ -100,9 +100,6 @@ if [ -n "$TMUX" ]; then
     # Create a test buffer
     echo "sync-test-content" | tmux load-buffer -
 
-    # Get the session name for push_buffers_to_atuin
-    session=$(tmux display-message -p '#S')
-
     # Push to atuin
     push_buffers_to_atuin "$TEST_NAMESPACE" 1
 
