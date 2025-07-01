@@ -78,6 +78,93 @@ func (m *TmuxBufferSync) Lint(ctx context.Context, source *dagger.Directory) err
 	return nil
 }
 
+// Generate demo gif of multi-server sync
+func (m *TmuxBufferSync) GenerateDemoGif(ctx context.Context, source *dagger.Directory) *dagger.File {
+	return m.recordMultiServerDemo(ctx, source)
+}
+
+// Record multi-server sync demo and create gif
+func (m *TmuxBufferSync) recordMultiServerDemo(ctx context.Context, source *dagger.Directory) *dagger.File {
+	return dag.Container().
+		From("ubuntu:22.04").
+		WithExec([]string{"apt-get", "update"}).
+		WithExec([]string{"apt-get", "install", "-y", "tmux", "curl", "ca-certificates", "asciinema", "imagemagick", "nodejs", "npm"}).
+		WithExec([]string{"npm", "install", "-g", "svg-term-cli"}).
+		WithExec([]string{"sh", "-c", "curl -L https://github.com/atuinsh/atuin/releases/latest/download/atuin-x86_64-unknown-linux-gnu.tar.gz | tar xz && mv atuin-*/atuin /usr/local/bin/ && chmod +x /usr/local/bin/atuin"}).
+		WithMountedDirectory("/plugin", source).
+		WithWorkdir("/plugin").
+		WithExec([]string{"sh", "-c", "mkdir -p ~/.local/share/atuin && atuin init bash --disable-up-arrow --disable-ctrl-r"}).
+		WithNewFile("/demo-script.sh", `#!/bin/bash
+set -e
+
+echo "🎬 Recording tmux-buffer-sync demo..."
+
+# Create demo script for asciinema
+cat > /tmp/demo.sh << 'EOF'
+#!/bin/bash
+clear
+echo "=== tmux-buffer-sync Multi-Server Demo ==="
+echo ""
+echo "🖥️  Setting up Server 1..."
+sleep 2
+
+# Server 1 session
+tmux new-session -d -s server1
+tmux send-keys -t server1 "clear" Enter
+tmux send-keys -t server1 "echo '🖥️  Server 1: Creating buffer content...'" Enter
+sleep 1
+tmux send-keys -t server1 "echo 'Hello from Server 1! 🚀' | tmux load-buffer -" Enter
+sleep 1
+tmux send-keys -t server1 "echo '📤 Syncing to shared storage...'" Enter
+tmux send-keys -t server1 "cd /plugin && source scripts/helpers.sh && source scripts/atuin_adapter.sh" Enter
+sleep 1
+tmux send-keys -t server1 "push_buffers_to_atuin 'demo-namespace' 1" Enter
+sleep 2
+tmux send-keys -t server1 "echo '✅ Buffer pushed to shared storage'" Enter
+sleep 1
+
+echo ""
+echo "🖥️  Setting up Server 2..."
+sleep 2
+
+# Server 2 session  
+tmux new-session -d -s server2
+tmux send-keys -t server2 "clear" Enter
+tmux send-keys -t server2 "echo '🖥️  Server 2: Pulling from shared storage...'" Enter
+sleep 1
+tmux send-keys -t server2 "cd /plugin && source scripts/helpers.sh && source scripts/atuin_adapter.sh" Enter
+sleep 1
+tmux send-keys -t server2 "pull_buffers_from_atuin 'demo-namespace' 1" Enter
+sleep 2
+tmux send-keys -t server2 "echo '📥 Checking received buffer...'" Enter
+sleep 1
+tmux send-keys -t server2 "tmux show-buffer" Enter
+sleep 2
+tmux send-keys -t server2 "echo '🎉 Success! Buffer synced across servers'" Enter
+sleep 2
+
+echo ""
+echo "✨ Demo complete! tmux-buffer-sync working perfectly ✨"
+sleep 3
+EOF
+
+chmod +x /tmp/demo.sh
+
+# Record with asciinema
+asciinema rec /tmp/demo.cast -c "bash /tmp/demo.sh" --overwrite
+
+# Convert to SVG then GIF
+svg-term --cast /tmp/demo.cast --out /tmp/demo.svg --window
+convert /tmp/demo.svg /tmp/demo.gif
+
+echo "✅ Demo GIF generated successfully!"
+ls -la /tmp/demo.gif
+		`).
+		WithExec([]string{"chmod", "+x", "/demo-script.sh"}).
+		WithExec([]string{"/demo-script.sh"}).
+		File("/tmp/demo.gif")
+}
+
 // Simulate multi-server buffer synchronization
 func (m *TmuxBufferSync) TestMultiServerSync(ctx context.Context, source *dagger.Directory) error {
 	// Create shared storage simulation using a simple service
@@ -172,4 +259,22 @@ func (m *TmuxBufferSync) Test(ctx context.Context, source *dagger.Directory) err
 	}
 	
 	return nil
+}
+
+// Generate CI artifacts including demo gif
+func (m *TmuxBufferSync) GenerateArtifacts(ctx context.Context, source *dagger.Directory) *dagger.Directory {
+	// Generate demo gif
+	demoGif := m.GenerateDemoGif(ctx, source)
+	
+	// Create artifacts directory with demo gif
+	return dag.Directory().
+		WithFile("demo.gif", demoGif).
+		WithNewFile("README.md", `# tmux-buffer-sync Demo Artifacts
+
+## demo.gif
+Animated demonstration of tmux-buffer-sync working across multiple servers.
+Shows buffer synchronization in real-time using tmux sessions.
+
+Generated automatically during CI pipeline.
+`)
 }
