@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: debian:bookworm-slim
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install system dependencies
+      run: |
+        apt-get update
+        apt-get install -y tmux curl ca-certificates
+
+    - name: Install atuin
+      run: |
+        curl -L https://github.com/atuinsh/atuin/releases/latest/download/atuin-x86_64-unknown-linux-gnu.tar.gz | tar xz
+        mv atuin-*/atuin /usr/local/bin/
+        chmod +x /usr/local/bin/atuin
+
+    - name: Setup atuin for testing
+      run: |
+        # Initialize atuin without requiring interactive setup
+        mkdir -p ~/.local/share/atuin
+        atuin init bash --disable-up-arrow --disable-ctrl-r
+
+    - name: Start tmux session for testing
+      run: |
+        # Start tmux in detached mode for testing
+        tmux new-session -d -s test-session
+
+    - name: Run end-to-end tests
+      run: |
+        # Set TMUX environment variable to simulate being in tmux
+        export TMUX=/tmp/tmux-1000/default,1234,0
+        bash tests/test_end_to_end.sh
+      env:
+        TMUX: /tmp/tmux-1000/default,1234,0
+
+  lint:
+    runs-on: ubuntu-latest
+    container: debian:bookworm-slim
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install shellcheck
+      run: |
+        apt-get update
+        apt-get install -y shellcheck
+
+    - name: Run shellcheck
+      run: |
+        find . -name "*.sh" -not -path "./.git/*" -exec shellcheck {} \;
+
+    - name: Check shell script permissions
+      run: |
+        # Ensure all shell scripts are executable
+        find . -name "*.sh" -not -path "./.git/*" -exec test -x {} \; || {
+          echo "Some shell scripts are not executable:"
+          find . -name "*.sh" -not -path "./.git/*" -not -executable
+          exit 1
+        }
