@@ -9,73 +9,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: debian:bookworm-slim
-
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: Install system dependencies
-      run: |
-        apt-get update
-        apt-get install -y tmux curl ca-certificates
-
-    - name: Install atuin
-      run: |
-        curl -L https://github.com/atuinsh/atuin/releases/latest/download/atuin-x86_64-unknown-linux-gnu.tar.gz | tar xz
-        mv atuin-*/atuin /usr/local/bin/
-        chmod +x /usr/local/bin/atuin
-
-    - name: Setup atuin for testing
-      run: |
-        # Initialize atuin without requiring interactive setup
-        mkdir -p ~/.local/share/atuin
-        atuin init bash --disable-up-arrow --disable-ctrl-r
-
-    - name: Run end-to-end tests in tmux
-      run: |
-        # Start tmux session
-        tmux new-session -d -s test-session
-        # Run the test inside tmux and capture output
-        tmux send-keys -t test-session "bash tests/test_end_to_end.sh && echo 'TEST_SUCCESS' || echo 'TEST_FAILED'" Enter
-        # Wait a bit for test to complete
-        sleep 30
-        # Capture the output
-        tmux capture-pane -t test-session -p > /tmp/test_output.log
-        # Check if test was successful
-        if grep -q "TEST_SUCCESS" /tmp/test_output.log; then
-          echo "✓ Tests passed"
-          cat /tmp/test_output.log
-        else
-          echo "✗ Tests failed"
-          cat /tmp/test_output.log
-          exit 1
-        fi
-        # Clean up
-        tmux kill-session -t test-session 2>/dev/null || true
-
-  lint:
-    runs-on: ubuntu-latest
-    container: debian:bookworm-slim
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Install shellcheck
-      run: |
-        apt-get update
-        apt-get install -y shellcheck
-
-    - name: Run shellcheck
-      run: |
-        find . -name "*.sh" -not -path "./.git/*" -exec shellcheck {} \;
-
-    - name: Check shell script permissions
-      run: |
-        # Ensure all shell scripts are executable
-        find . -name "*.sh" -not -path "./.git/*" -exec test -x {} \; || {
-          echo "Some shell scripts are not executable:"
-          find . -name "*.sh" -not -path "./.git/*" -not -executable
-          exit 1
-        }
+      
+    - name: Run Dagger pipeline
+      uses: dagger/dagger-for-github@v6
+      with:
+        version: "latest"
+        verb: call
+        args: test --source=.
