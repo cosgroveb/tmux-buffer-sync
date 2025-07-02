@@ -8,7 +8,7 @@
 
 store_sync_status() {
     local session="$1"
-    local status="$2"
+    local sync_status="$2"
     local timestamp="$3"
     local namespace
     namespace=$(tmux show-option -t "$session" -v "@buffer-sync-namespace" 2>/dev/null || echo "tmux-buffers")
@@ -16,7 +16,7 @@ store_sync_status() {
 
     local storage_namespace="$namespace"
 
-    atuin kv set --namespace "$storage_namespace" --key "_sync_status_${session}" "$status" 2>/dev/null || true
+    atuin kv set --namespace "$storage_namespace" --key "_sync_status_${session}" "$sync_status" 2>/dev/null || true
     atuin kv set --namespace "$storage_namespace" --key "_sync_timestamp_${session}" "$timestamp" 2>/dev/null || true
 }
 

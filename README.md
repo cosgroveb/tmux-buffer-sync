@@ -71,6 +71,30 @@ After installation, verify the plugin is working:
    tmux show-buffer
    ```
 
+## How Sync Works
+
+### Buffer Sync Behavior
+
+tmux-buffer-sync follows a **"last writer wins"** strategy:
+
+- **Push**: Copies your local tmux buffers to remote storage, **overwriting** any existing remote buffers
+- **Pull**: Copies remote buffers to your local tmux, **adding** to your existing buffers
+- **Bidirectional sync**: Performs both push and pull operations
+
+### Important Notes
+
+⚠️ **No merging**: When you push buffers, remote buffers from other servers are completely replaced with your local buffers. This means:
+
+- If **Server A** pushes 3 buffers, then **Server B** pushes 2 buffers → remote storage only contains Server B's 2 buffers
+- **Server A's buffers are lost** unless Server A pulls before pushing again
+- For best experience, sync frequently or use automatic sync to minimize buffer loss
+
+### Sync Triggers
+
+- **Automatic**: Every `@buffer-sync-frequency` seconds (default: 15s)
+- **Copy hooks**: Immediate sync when you copy content (can be disabled)
+- **Manual**: Use `:buffer-sync-now` command anytime
+
 ## Configuration
 
 Add these options to your `~/.tmux.conf` to customize the plugin:
