@@ -5,3 +5,4 @@ tmux-client-*.log
 .DS_Store
 Thumbs.db
 CLAUDE.local.md
+notes/*
