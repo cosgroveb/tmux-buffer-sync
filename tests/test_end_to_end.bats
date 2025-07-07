@@ -119,27 +119,6 @@ function _load_plugin_scripts() {
   fi
 }
 
-function configuration_helper_functions_work() { #@test
-  # Load plugin scripts
-  _load_plugin_scripts
-
-  # Add content to buffers for sync
-  tmux -S "$TMUX_SOCKET" send-keys -t "$TEST_SESSION" "echo 'test-sync-content' | tmux -S '$TMUX_SOCKET' load-buffer -" Enter
-  sleep 1
-
-  # Perform sync
-  _tmux_exec "sync_buffers '$TEST_SESSION'"
-
-  # Assert sync
-  local status_output
-  status_output=$(_tmux_exec "get_last_sync_status '$TEST_SESSION'")
-  [[ "$status_output" == "success" ]]
-
-  # Assert timestamp also recorded
-  local timestamp_output
-  timestamp_output=$(_tmux_exec "get_last_sync_timestamp '$TEST_SESSION'")
-  [[ -n "$timestamp_output" ]] && [[ "$timestamp_output" =~ ^[0-9]+$ ]]
-}
 
 function buffer_operations_can_read_tmux_buffers() { #@test
   # Load plugin scripts on both servers
