@@ -14,7 +14,11 @@ register_user_commands() {
     local plugin_script
     plugin_script="$(cd "$SCRIPT_DIR/.." && pwd)/buffer-sync.tmux"
 
-    tmux set-option -g command-alias "buffer-sync-now=run-shell '$plugin_script user-command buffer-sync-now #{session_name}'"
+    # NOTE: Using -ag (append) means reloading the plugin will create duplicate aliases.
+    # This is a known limitation - tmux command-alias is an array option without built-in
+    # deduplication. To properly handle this would require using indexed array notation
+    # like command-alias[100], but that risks conflicts with other plugins.
+    tmux set-option -ag command-alias "buffer-sync-now=run-shell '$plugin_script user-command buffer-sync-now #{session_name}'"
     tmux set-option -ag command-alias "buffer-sync-status=run-shell '$plugin_script user-command buffer-sync-status #{session_name}'"
 
     return 0
