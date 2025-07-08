@@ -153,6 +153,33 @@ function buffer_operations_can_read_tmux_buffers() { #@test
   rm -f "$TMUX_SOCKET_2"
 }
 
+function pull_updates_existing_buffers_not_duplicates() { #@test
+  # Load plugin scripts
+  _load_plugin_scripts false
+  
+  # Create some existing buffers
+  echo "old1" | tmux -S "$TMUX_SOCKET" load-buffer -
+  echo "old2" | tmux -S "$TMUX_SOCKET" load-buffer -
+  
+  # Store different content in atuin
+  atuin kv set --namespace "$TEST_NAMESPACE" --key "buffer.0" "new1"
+  atuin kv set --namespace "$TEST_NAMESPACE" --key "buffer.1" "new2"
+  
+  # Count buffers before pull
+  local before_count
+  before_count=$(tmux -S "$TMUX_SOCKET" list-buffers | wc -l)
+  
+  # Pull from atuin
+  _tmux_exec "pull_buffers_from_atuin '$TEST_NAMESPACE' 2"
+  
+  # Count buffers after pull
+  local after_count
+  after_count=$(tmux -S "$TMUX_SOCKET" list-buffers | wc -l)
+  
+  # Assert buffer count unchanged
+  [[ $before_count -eq $after_count ]]
+}
+
 function plugin_loads_correctly_via_tpm_interface() { #@test
   # Test main plugin entry point exists and is executable
   [[ -f "$PROJECT_ROOT/buffer-sync.tmux" ]]

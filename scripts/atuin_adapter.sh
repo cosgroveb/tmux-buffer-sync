@@ -172,11 +172,25 @@ pull_buffers_from_atuin() {
         return 1
     fi
 
+    # Get existing buffer names to update them instead of creating new ones
+    local existing_buffers
+    existing_buffers=($(tmux list-buffers -F "#{buffer_name}" 2>/dev/null | head -n "$count"))
+
     local success=0
     local i
     for ((i=0; i<count; i++)); do
-        if load_buffer_from_atuin "$namespace" "$i"; then
-            success=$((success + 1))
+        if [[ $i -lt ${#existing_buffers[@]} ]]; then
+            # Update existing buffer by name
+            local buffer_content
+            if buffer_content=$(atuin_kv_get "$namespace" "buffer.$i"); then
+                echo -n "$buffer_content" | tmux load-buffer -b "${existing_buffers[$i]}" -
+                success=$((success + 1))
+            fi
+        else
+            # Create new buffer if we need more than exist
+            if load_buffer_from_atuin "$namespace" "$i"; then
+                success=$((success + 1))
+            fi
         fi
     done
 
