@@ -63,13 +63,7 @@ initialize_session() {
 
 if [ $# -gt 0 ]; then
     case "$1" in
-        "sync-timer")
-            session="$2"
-            if [ -n "$session" ]; then
-                sync_buffers "$session"
-            fi
-            ;;
-        "copy-sync")
+        "sync-timer" | "copy-sync")
             session="$2"
             if [ -n "$session" ]; then
                 sync_buffers "$session"
