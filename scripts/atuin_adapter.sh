@@ -174,7 +174,7 @@ pull_buffers_from_atuin() {
 
     # Get existing buffer names to update them instead of creating new ones
     local existing_buffers
-    existing_buffers=($(tmux list-buffers -F "#{buffer_name}" 2>/dev/null | head -n "$count"))
+    mapfile -t existing_buffers < <(tmux list-buffers -F "#{buffer_name}" 2>/dev/null | head -n "$count")
 
     local success=0
     local i

@@ -49,8 +49,6 @@ EOF
 
 format_sync_command_output() {
     local status="$1"
-    local pushed="$2"
-    local pulled="$3"
 
     case "$status" in
         "success")
