@@ -54,16 +54,16 @@ format_sync_command_output() {
 
     case "$status" in
         "success")
-            echo "✓ Sync completed successfully - Pushed: $pushed, Pulled: $pulled buffers"
+            echo "✓ Sync completed successfully"
             ;;
         "push_failed")
-            echo "✗ Sync failed during push phase - Check atuin connectivity"
+            echo "✗ Sync failed - unable to push/pull buffers"
             ;;
         "pull_failed")
-            echo "✗ Sync failed during pull phase - Pushed: $pushed buffers"
+            echo "✗ Sync failed - unable to push/pull buffers"
             ;;
         "partial_failure")
-            echo "⚠ Sync completed with warnings - Pushed: $pushed, Pulled: $pulled buffers"
+            echo "⚠ Sync completed with warnings"
             ;;
         *)
             echo "? Sync status unknown - Check configuration and atuin availability"
@@ -103,11 +103,11 @@ execute_buffer_sync_now() {
         end_time=$(date +%s)
         duration=$((end_time - start_time))
 
-        format_sync_command_output "success" "$count" "$count"
+        format_sync_command_output "success"
         echo "Completed in ${duration}s"
         return 0
     else
-        format_sync_command_output "push_failed" "0" "0"
+        format_sync_command_output "push_failed"
         return 1
     fi
 }
