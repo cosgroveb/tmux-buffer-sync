@@ -32,14 +32,22 @@ main() {
 setup_timer_sync() {
     local session="$1"
     local frequency
-    frequency=$(tmux show-option -t "$session" -v "@buffer-sync-frequency" 2>/dev/null || echo "15")
+    frequency=$(get_tmux_option "$session" "@buffer-sync-frequency" "15")
     [[ "$frequency" =~ ^[0-9]+$ ]] && [ "$frequency" -gt 0 ] || frequency="15"
 
     # Set status interval for timer-based sync
     tmux set-option -t "$session" status-interval "$frequency"
 
-    # Register refresh hook to trigger sync
-    tmux set-hook -t "$session" after-refresh-client "run-shell '$CURRENT_DIR/buffer-sync.tmux sync-timer \"$session\"'"
+    # Get current status-right and append our sync command
+    local current_status_right
+    current_status_right=$(tmux show-option -t "$session" -gqv status-right)
+
+    # Add invisible sync trigger to status-right
+    # The #() runs a shell command during each status update
+    local sync_command="#(${CURRENT_DIR}/buffer-sync.tmux sync-timer \"$session\" >/dev/null 2>&1; echo -n '')"
+
+    # Append to existing status-right
+    tmux set-option -t "$session" status-right "${current_status_right}${sync_command}"
 
     return 0
 }

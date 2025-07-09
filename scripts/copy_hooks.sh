@@ -12,7 +12,7 @@ register_copy_hooks() {
 
     local copy_hooks_enabled
     local value
-    value=$(tmux show-option -t "$session" -v "@buffer-sync-copy-hooks" 2>/dev/null || echo "")
+    value=$(get_tmux_option "$session" "@buffer-sync-copy-hooks" "")
     case "$(echo "$value" | tr '[:upper:]' '[:lower:]')" in
         "off"|"false"|"0"|"no"|"disabled") copy_hooks_enabled="off" ;;
         *) copy_hooks_enabled="on" ;;
@@ -43,7 +43,7 @@ on_copy_event() {
 
     local copy_hooks_enabled
     local value
-    value=$(tmux show-option -t "$session" -v "@buffer-sync-copy-hooks" 2>/dev/null || echo "")
+    value=$(get_tmux_option "$session" "@buffer-sync-copy-hooks" "")
     case "$(echo "$value" | tr '[:upper:]' '[:lower:]')" in
         "off"|"false"|"0"|"no"|"disabled") copy_hooks_enabled="off" ;;
         *) copy_hooks_enabled="on" ;;
@@ -62,7 +62,7 @@ are_copy_hooks_enabled() {
     local session="$1"
     local copy_hooks_enabled
     local value
-    value=$(tmux show-option -t "$session" -v "@buffer-sync-copy-hooks" 2>/dev/null || echo "")
+    value=$(get_tmux_option "$session" "@buffer-sync-copy-hooks" "")
     case "$(echo "$value" | tr '[:upper:]' '[:lower:]')" in
         "off"|"false"|"0"|"no"|"disabled") copy_hooks_enabled="off" ;;
         *) copy_hooks_enabled="on" ;;

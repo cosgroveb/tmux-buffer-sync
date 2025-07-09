@@ -72,9 +72,9 @@ format_sync_command_output() {
 format_status_command_output() {
     local session="$1"
     local ns count freq status
-    ns=$(tmux show-option -t "$session" -v "@buffer-sync-namespace" 2>/dev/null || echo "tmux-buffers")
-    count=$(tmux show-option -t "$session" -v "@buffer-sync-count" 2>/dev/null || echo "10")
-    freq=$(tmux show-option -t "$session" -v "@buffer-sync-frequency" 2>/dev/null || echo "15")
+    ns=$(get_tmux_option "$session" "@buffer-sync-namespace" "tmux-buffers")
+    count=$(get_tmux_option "$session" "@buffer-sync-count" "10")
+    freq=$(get_tmux_option "$session" "@buffer-sync-frequency" "15")
     status=$(get_last_sync_status "$session")
 
     echo "buffer-sync: namespace=$ns, count=$count, freq=${freq}s, status=$status"
@@ -89,7 +89,7 @@ sync_buffers_interactive() {
     fi
 
     local count
-    count=$(tmux show-option -t "$session" -v "@buffer-sync-count" 2>/dev/null || echo "10")
+    count=$(get_tmux_option "$session" "@buffer-sync-count" "10")
     [[ "$count" =~ ^[0-9]+$ ]] && [ "$count" -gt 0 ] || count="10"
 
     # timing

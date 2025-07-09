@@ -11,8 +11,7 @@ store_sync_status() {
     local sync_status="$2"
     local timestamp="$3"
     local namespace
-    namespace=$(tmux show-option -t "$session" -v "@buffer-sync-namespace" 2>/dev/null || echo "tmux-buffers")
-    [ -n "$namespace" ] || namespace="tmux-buffers"
+    namespace=$(get_tmux_option "$session" "@buffer-sync-namespace" "tmux-buffers")
 
     local storage_namespace="$namespace"
 
@@ -27,9 +26,8 @@ sync_buffers() {
     local sync_type="${2:-Manual}"  # Default to "Manual" if not provided
 
     local namespace count
-    namespace=$(tmux show-option -t "$session" -v "@buffer-sync-namespace" 2>/dev/null || echo "tmux-buffers")
-    [ -n "$namespace" ] || namespace="tmux-buffers"
-    count=$(tmux show-option -t "$session" -v "@buffer-sync-count" 2>/dev/null || echo "10")
+    namespace=$(get_tmux_option "$session" "@buffer-sync-namespace" "tmux-buffers")
+    count=$(get_tmux_option "$session" "@buffer-sync-count" "10")
     [[ "$count" =~ ^[0-9]+$ ]] && [ "$count" -gt 0 ] || count="10"
 
     local timestamp
