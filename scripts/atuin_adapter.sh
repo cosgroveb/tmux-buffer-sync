@@ -120,7 +120,7 @@ load_buffer_from_atuin() {
     fi
 
     # Load content into tmux buffer
-    echo -n "$buffer_content" | tmux load-buffer -b "$buffer_index" -
+    printf "%s" "$buffer_content" | tmux load-buffer -b "$buffer_index" -
 }
 
 push_buffers_to_atuin() {
@@ -173,7 +173,7 @@ pull_buffers_from_atuin() {
             # Update existing buffer by name
             local buffer_content
             if buffer_content=$(atuin_kv_get "$namespace" "buffer.$i"); then
-                echo -n "$buffer_content" | tmux load-buffer -b "${existing_buffers[$i]}" -
+                printf "%s" "$buffer_content" | tmux load-buffer -b "${existing_buffers[$i]}" -
                 success=$((success + 1))
             fi
         else

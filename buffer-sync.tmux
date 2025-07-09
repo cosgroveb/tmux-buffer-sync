@@ -26,6 +26,12 @@ main() {
         initialize_session "$session"
     done
 
+    # Set up a hook to reinitialize when new sessions are created
+    tmux set-hook -g session-created "run-shell '${CURRENT_DIR}/buffer-sync.tmux reinit-session #{session_name}'"
+
+    # Set up a hook to reinitialize after config reload (if supported)
+    tmux set-hook -g after-source-file "run-shell '${CURRENT_DIR}/buffer-sync.tmux reinit-all'" 2>/dev/null || true
+
     return 0
 }
 
@@ -38,16 +44,23 @@ setup_timer_sync() {
     # Set status interval for timer-based sync
     tmux set-option -t "$session" status-interval "$frequency"
 
-    # Get current status-right and append our sync command
+    # Get current status-right, checking session-specific first, then global
     local current_status_right
-    current_status_right=$(tmux show-option -t "$session" -gqv status-right)
+    current_status_right=$(tmux show-option -t "$session" -qv status-right 2>/dev/null)
+    if [ -z "$current_status_right" ]; then
+        current_status_right=$(tmux show-option -gqv status-right 2>/dev/null)
+    fi
 
     # Add invisible sync trigger to status-right
     # The #() runs a shell command during each status update
-    local sync_command="#(${CURRENT_DIR}/buffer-sync.tmux sync-timer \"$session\" >/dev/null 2>&1; echo -n '')"
+    # Use 'true' command which reliably produces no output
+    local sync_command="#(${CURRENT_DIR}/buffer-sync.tmux sync-timer \"$session\" >/dev/null 2>&1; true)"
 
-    # Append to existing status-right
-    tmux set-option -t "$session" status-right "${current_status_right}${sync_command}"
+    # Check if our sync command is already present to avoid duplication
+    if [[ "$current_status_right" != *"buffer-sync.tmux sync-timer"* ]]; then
+        # Append to existing status-right
+        tmux set-option -t "$session" status-right "${current_status_right}${sync_command}"
+    fi
 
     return 0
 }
@@ -83,6 +96,17 @@ if [ $# -gt 0 ]; then
                         ;;
                 esac
             fi
+            ;;
+        "reinit-session")
+            session="$2"
+            if [ -n "$session" ]; then
+                initialize_session "$session"
+            fi
+            ;;
+        "reinit-all")
+            for session in $(tmux list-sessions -F "#{session_name}" 2>/dev/null); do
+                initialize_session "$session"
+            done
             ;;
         "user-command")
             command="$2"
