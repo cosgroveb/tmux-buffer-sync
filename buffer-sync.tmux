@@ -75,10 +75,10 @@ if [ $# -gt 0 ]; then
             if [ -n "$command" ] && [ -n "$session" ]; then
                 case "$command" in
                     "buffer-sync-now")
-                        execute_buffer_sync_now "$session"
+                        sync_buffers_interactive "$session"
                         ;;
                     "buffer-sync-status")
-                        execute_buffer_sync_status "$session"
+                        show_sync_status "$session"
                         ;;
                     *)
                         echo "Unknown command: $command"

@@ -80,7 +80,7 @@ format_status_command_output() {
     echo "buffer-sync: namespace=$ns, count=$count, freq=${freq}s, status=$status"
 }
 
-execute_buffer_sync_now() {
+sync_buffers_interactive() {
     local session="$1"
 
     if ! is_atuin_available; then
@@ -110,7 +110,7 @@ execute_buffer_sync_now() {
     fi
 }
 
-execute_buffer_sync_status() {
+show_sync_status() {
     local session="$1"
     local status_output
     status_output=$(format_status_command_output "$session")
