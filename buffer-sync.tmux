@@ -66,7 +66,14 @@ if [ $# -gt 0 ]; then
         "sync-timer" | "copy-sync")
             session="$2"
             if [ -n "$session" ]; then
-                sync_buffers "$session"
+                case "$1" in
+                    "sync-timer")
+                        sync_buffers "$session" "Timer"
+                        ;;
+                    "copy-sync")
+                        sync_buffers "$session" "Copy"
+                        ;;
+                esac
             fi
             ;;
         "user-command")

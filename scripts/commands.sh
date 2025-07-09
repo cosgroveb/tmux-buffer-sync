@@ -96,7 +96,7 @@ sync_buffers_interactive() {
     local start_time
     start_time=$(date +%s)
 
-    if sync_buffers "$session"; then
+    if sync_buffers "$session" "Manual"; then
         local end_time duration
         end_time=$(date +%s)
         duration=$((end_time - start_time))

@@ -24,6 +24,7 @@ store_sync_status() {
 # Main bidirectional sync function
 sync_buffers() {
     local session="$1"
+    local sync_type="${2:-Manual}"  # Default to "Manual" if not provided
 
     local namespace count
     namespace=$(tmux show-option -t "$session" -v "@buffer-sync-namespace" 2>/dev/null || echo "tmux-buffers")
@@ -38,9 +39,11 @@ sync_buffers() {
     # Push local buffers and pull remote buffers
     if push_buffers_to_atuin "$namespace" "$count" && pull_buffers_from_atuin "$namespace" "$count"; then
         store_sync_status "$session" "success" "$(date +%s)"
+        debug_notify "$session" "$sync_type" "success"
         return 0
     else
         store_sync_status "$session" "failed" "$(date +%s)"
+        debug_notify "$session" "$sync_type" "failed: sync operation failed"
         return 1
     fi
 }
