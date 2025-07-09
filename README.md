@@ -113,7 +113,24 @@ set -g @buffer-sync-namespace 'my-buffers'
 
 # Disable copy operation hooks for immediate sync (default: on)
 set -g @buffer-sync-copy-hooks off
+
+# Enable debug mode to see sync notifications (default: off)
+set -g @buffer-sync-debug on
 ```
+
+### Debug Mode
+
+The plugin includes a debug mode that displays notifications when sync operations occur:
+
+```bash
+# Enable debug mode in tmux.conf
+set -g @buffer-sync-debug on
+```
+
+When debug mode is enabled, you'll see tmux notifications for:
+- **Manual sync**: Triggered by `:buffer-sync-now`
+- **Timer sync**: Automatic periodic synchronization
+- **Copy sync**: Immediate sync after copy operations
 
 ### Manual Commands
 
