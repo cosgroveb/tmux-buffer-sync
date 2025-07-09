@@ -92,11 +92,6 @@ store_buffer_to_atuin_by_name() {
     local buffer_name="$2"
     local storage_index="$3"
 
-    if ! validate_namespace "$namespace"; then
-        log_message "error" "Invalid namespace for storage: $namespace"
-        return 1
-    fi
-
     # Get buffer content by name
     local buffer_content
     if ! buffer_content=$(tmux show-buffer -b "$buffer_name" 2>/dev/null); then
@@ -114,11 +109,6 @@ store_buffer_to_atuin_by_name() {
 load_buffer_from_atuin() {
     local namespace="$1"
     local buffer_index="$2"
-
-    if ! validate_namespace "$namespace"; then
-        log_message "error" "Invalid namespace for retrieval: $namespace"
-        return 1
-    fi
 
     local storage_key
     storage_key="buffer.${buffer_index}"
