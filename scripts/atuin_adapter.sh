@@ -187,3 +187,61 @@ pull_buffers_from_atuin() {
     log_message "info" "Pulled $success/$count buffers from storage"
     return 0
 }
+
+# Incremental sync functions - only sync latest buffer
+push_latest_buffer_to_atuin() {
+    local namespace="$1"
+
+    if ! validate_namespace "$namespace"; then
+        log_message "error" "Invalid namespace for push operation: $namespace"
+        return 1
+    fi
+
+    # Get the most recent buffer (first in list)
+    local latest_buffer_name
+    latest_buffer_name=$(tmux list-buffers -F "#{buffer_name}" 2>/dev/null | head -n 1)
+
+    if [ -z "$latest_buffer_name" ]; then
+        log_message "debug" "No buffers to push"
+        return 0
+    fi
+
+    # Store latest buffer at fixed key
+    if store_buffer_to_atuin_by_name "$namespace" "$latest_buffer_name" "latest"; then
+        log_message "debug" "Pushed latest buffer to storage"
+        return 0
+    else
+        log_message "error" "Failed to push latest buffer"
+        return 1
+    fi
+}
+
+pull_latest_buffer_from_atuin() {
+    local namespace="$1"
+
+    if ! validate_namespace "$namespace"; then
+        log_message "error" "Invalid namespace for pull operation: $namespace"
+        return 1
+    fi
+
+    # Get latest buffer from storage
+    local buffer_content
+    if ! buffer_content=$(atuin_kv_get "$namespace" "buffer.latest"); then
+        log_message "debug" "No latest buffer in storage"
+        return 0
+    fi
+
+    # Only pull if content is different from current latest buffer
+    local current_latest
+    current_latest=$(tmux show-buffer 2>/dev/null || echo "")
+
+    if [ "$buffer_content" != "$current_latest" ]; then
+        # Add as new buffer (pushes to top of stack)
+        printf "%s" "$buffer_content" | tmux load-buffer -
+        log_message "debug" "Pulled latest buffer from storage"
+    else
+        log_message "debug" "Latest buffer already up to date"
+    fi
+
+    return 0
+}

@@ -89,10 +89,10 @@ if [ $# -gt 0 ]; then
             if [ -n "$session" ]; then
                 case "$1" in
                     "sync-timer")
-                        sync_buffers "$session" "Timer"
+                        perform_sync "$session" "Timer"
                         ;;
                     "copy-sync")
-                        sync_buffers "$session" "Copy"
+                        perform_sync "$session" "Copy"
                         ;;
                 esac
             fi

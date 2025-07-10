@@ -53,7 +53,7 @@ on_copy_event() {
         return 1
     fi
 
-    sync_buffers "$session"
+    perform_sync "$session" "Copy"
 
     return $?
 }
